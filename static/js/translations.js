@@ -16,6 +16,9 @@ const translations = {
         "featureWeatherDesc": "Get 3-day meteorological forecasts and crop precautions.",
         "featureGuideDesc": "Generate a complete A-Z farming manual for any crop.",
         "featureEconDesc": "Calculate total costs and projected profit for the Indian market.",
+        
+        "creditSupervision": "Under the supervision of",
+        "creditDeveloped": "Developed by",
 
         "diseaseTitle": "Disease Recognition",
         "diseaseSubtitle": "Upload an image of a plant leaf to detect diseases and get instant organic remedies and fertilizer recommendations.",
@@ -74,6 +77,9 @@ const translations = {
         "featureWeatherDesc": "3-दिन के मौसम संबंधी पूर्वानुमान और फसल सावधानियां प्राप्त करें।",
         "featureGuideDesc": "किसी भी फसल के लिए संपूर्ण A-Z खेती मैनुअल बनाएं।",
         "featureEconDesc": "भारतीय बाजार के लिए कुल लागत और अनुमानित लाभ की गणना करें।",
+        
+        "creditSupervision": "के मार्गदर्शन में",
+        "creditDeveloped": "द्वारा विकसित",
 
         "diseaseTitle": "पौधों के रोग की पहचान",
         "diseaseSubtitle": "बीमारियों का पता लगाने और तुरंत जैविक उपचार और उर्वरक सिफारिशें प्राप्त करने के लिए पौधे की पत्ती की एक छवि अपलोड करें।",
@@ -132,6 +138,9 @@ const translations = {
         "featureWeatherDesc": "3-ਦਿਨ ਦੇ ਮੌਸਮ ਸੰਬੰਧੀ ਪੂਰਵ ਅਨੁਮਾਨ ਅਤੇ ਫਸਲ ਦੀਆਂ ਸਾਵਧਾਨੀਆਂ ਪ੍ਰਾਪਤ ਕਰੋ।",
         "featureGuideDesc": "ਕਿਸੇ ਵੀ ਫਸਲ ਲਈ ਪੂਰਾ A-Z ਖੇਤੀਬਾੜੀ ਦਸਤਾਵੇਜ਼ ਬਣਾਓ।",
         "featureEconDesc": "ਭਾਰਤੀ ਬਾਜ਼ਾਰ ਲਈ ਕੁੱਲ ਲਾਗਤਾਂ ਅਤੇ ਅਨੁਮਾਨਿਤ ਲਾਭ ਦੀ ਗਣਨਾ ਕਰੋ।",
+        
+        "creditSupervision": "ਦੀ ਨਿਗਰਾਨੀ ਹੇਠ",
+        "creditDeveloped": "ਦੁਆਰਾ ਵਿਕਸਤ",
 
         "diseaseTitle": "ਬਿਮਾਰੀ ਦੀ ਪਛਾਣ",
         "diseaseSubtitle": "ਬਿਮਾਰੀਆਂ ਦਾ ਪਤਾ ਲਗਾਉਣ ਅਤੇ ਤੁਰੰਤ ਜੈਵਿਕ ਉਪਚਾਰ ਅਤੇ ਖਾਦ ਦੀਆਂ ਸਿਫ਼ਾਰਸ਼ਾਂ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ ਪੌਦੇ ਦੇ ਪੱਤੇ ਦੀ ਤਸਵੀਰ ਅਪਲੋਡ ਕਰੋ।",
