@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantEase | Disease Recognition</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='images/watermark.jpg') }}">
+    <!-- Phosphor Icons for modern UI icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="ph-fill ph-plant"></i>
+                <span data-i18n="appName">Kissan Sarthi</span>
+            </div>
+            <ul class="nav-links">
+                <div style="padding: 0 1.5rem 1rem 1.5rem;">
+                    <select id="global-language" class="language-select" style="width: 100%; padding: 0.75rem; border-radius: 0.5rem; background: #ffffff; border: 1px solid #e2e8f0; color: #1e293b; font-weight: 500; cursor: pointer; outline: none; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <option value="en">English</option>
+                        <option value="hi">हिंदी (Hindi)</option>
+                        <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                    </select>
+                </div>
+                <li class="active" data-target="home-section"><a href="#"><i class="ph ph-house"></i> <span data-i18n="navHome">Home Page</span></a></li>
+                <li data-target="disease-section"><a href="#"><i class="ph ph-scan"></i> <span data-i18n="navDisease">Disease Recognition</span></a></li>
+                <li data-target="assistant-section"><a href="#"><i class="ph ph-robot"></i> <span data-i18n="navAssistant">AI Assistant</span></a></li>
+                <li data-target="weather-section"><a href="#"><i class="ph ph-cloud-sun"></i> <span data-i18n="navWeather">Weather Advisory</span></a></li>
+                <li data-target="guidebook-section"><a href="#"><i class="ph ph-book-open"></i> <span data-i18n="navGuidebook">Crop Guidebook</span></a></li>
+                <li data-target="economics-section"><a href="#"><i class="ph ph-chart-line-up"></i> <span data-i18n="navEconomics">Farming Economics</span></a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <p>&copy; 2026 <span data-i18n="appName">Kissan Sarthi</span></p>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- Home Section -->
+            <div id="home-section" class="tab-section active">
+                <div class="home-hero">
+                    <img src="{{ url_for('static', filename='images/watermark.jpg') }}" alt="Kissan Sarthi Hero" class="hero-image">
+                    <div class="hero-overlay">
+                        <div style="position: absolute; top: 1.5rem; right: 1.5rem;">
+                            <select id="home-language" class="language-select" style="padding: 0.5rem; border-radius: 0.5rem; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; font-weight: 500; cursor: pointer; outline: none; backdrop-filter: blur(5px);">
+                                <option value="en" style="color: black;">English</option>
+                                <option value="hi" style="color: black;">हिंदी (Hindi)</option>
+                                <option value="pa" style="color: black;">ਪੰਜਾਬੀ (Punjabi)</option>
+                            </select>
+                        </div>
+                        <h1 data-i18n="homeTitle">Welcome to Kissan Sarthi</h1>
+                        <p data-i18n="homeSubtitle">Your complete AI-powered agricultural assistant. Empowering farmers with modern technology for better yields, disease management, and market success.</p>
+                    </div>
+                </div>
+                
+                <h2 style="margin: 2rem 0 1rem; font-size: 1.5rem;" data-i18n="homeFeatures">Our Features</h2>
+                <div class="feature-grid">
+                    <div class="feature-card" data-link="disease-section">
+                        <div class="feature-icon"><i class="ph ph-scan"></i></div>
+                        <h3 data-i18n="navDisease">Disease Recognition</h3>
+                        <p data-i18n="featureDiseaseDesc">Upload a leaf photo to get instant organic remedies.</p>
+                    </div>
+                    <div class="feature-card" data-link="assistant-section">
+                        <div class="feature-icon"><i class="ph ph-robot"></i></div>
+                        <h3 data-i18n="navAssistant">AI Assistant</h3>
+                        <p data-i18n="featureAssistantDesc">Chat with our agricultural AI for expert farming advice.</p>
+                    </div>
+                    <div class="feature-card" data-link="weather-section">
+                        <div class="feature-icon"><i class="ph ph-cloud-sun"></i></div>
+                        <h3 data-i18n="navWeather">Weather Advisory</h3>
+                        <p data-i18n="featureWeatherDesc">Get 15-day meteorological forecasts and crop precautions.</p>
+                    </div>
+                    <div class="feature-card" data-link="guidebook-section">
+                        <div class="feature-icon"><i class="ph ph-book-open"></i></div>
+                        <h3 data-i18n="navGuidebook">Crop Guidebook</h3>
+                        <p data-i18n="featureGuideDesc">Generate a complete A-Z farming manual for any crop.</p>
+                    </div>
+                    <div class="feature-card" data-link="economics-section">
+                        <div class="feature-icon"><i class="ph ph-chart-line-up"></i></div>
+                        <h3 data-i18n="navEconomics">Farming Economics</h3>
+                        <p data-i18n="featureEconDesc">Calculate total costs and projected profit for the Indian market.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disease Recognition Section -->
+            <div id="disease-section" class="tab-section">
+                <header>
+                    <h1 data-i18n="diseaseTitle">Disease Recognition</h1>
+                    <p data-i18n="diseaseSubtitle">Upload an image of a plant leaf to detect diseases and get instant organic remedies and fertilizer recommendations.</p>
+                </header>
+
+                <div class="content-wrapper">
+                    <!-- Upload Section -->
+                    <div class="upload-section">
+                        <div class="upload-box" id="drop-zone">
+                            <input type="file" id="file-input" accept="image/jpeg, image/png, image/jpg" hidden>
+                            <div class="upload-content">
+                                <i class="ph ph-upload-simple"></i>
+                                <h3 data-i18n="dragDropText">Drag & Drop your image here</h3>
+                                <p data-i18n="orText">or</p>
+                                <button class="btn-primary" id="browse-btn" data-i18n="browseFilesBtn">Browse Files</button>
+                                <span class="file-hint">Supports: JPG, JPEG, PNG</span>
+                            </div>
+                            <img id="preview-image" style="display: none;" alt="Preview">
+                        </div>
+
+                        <div class="action-bar">
+                            <button class="btn-predict" id="predict-btn" disabled>
+                                <i class="ph ph-magic-wand"></i> <span data-i18n="predictBtn">Predict Disease</span>
+                            </button>
+                            <button class="btn-secondary" id="clear-btn" style="display: none;">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div class="loader-container" id="loader" style="display: none;">
+                        <div class="spinner"></div>
+                        <p data-i18n="loadingPredict">Analyzing plant leaf...</p>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="results-section" id="results" style="display: none;">
+                        <div class="prediction-card" id="prediction-card">
+                            <div class="prediction-header">
+                                <i class="ph ph-check-circle" id="result-icon"></i>
+                                <h2 data-i18n="predictionText">Analysis Result</h2>
+                            </div>
+                            <h3 id="prediction-text">Apple - Healthy</h3>
+                        </div>
+
+                        <div class="recommendations-grid">
+                            <!-- Remedies -->
+                            <div class="rec-card remedies-card">
+                                <div class="rec-header">
+                                    <i class="ph ph-leaf"></i>
+                                    <h3 data-i18n="remediesText">Organic Remedies</h3>
+                                </div>
+                                <ul id="remedies-list">
+                                    <!-- Populated by JS -->
+                                </ul>
+                            </div>
+
+                            <!-- Fertilizers -->
+                            <div class="rec-card fertilizers-card">
+                                <div class="rec-header">
+                                    <i class="ph ph-potted-plant"></i>
+                                    <h3 data-i18n="fertilizersText">Recommended Fertilizers</h3>
+                                </div>
+                                <ul id="fertilizers-list">
+                                    <!-- Populated by JS -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Assistant Section -->
+            <div id="assistant-section" class="tab-section" style="display: none;">
+                <header>
+                    <h1 data-i18n="assistantTitle">AI Farming Assistant</h1>
+                    <p data-i18n="assistantSubtitle">Ask our intelligent bot any farming-related questions, from crop rotation to pest control.</p>
+                </header>
+
+                <div class="chat-container">
+                    <div class="chat-box" id="chat-box">
+                        <div class="chat-message bot">
+                            <div class="avatar"><i class="ph ph-robot"></i></div>
+                            <div class="msg-content" data-i18n="aiGreeting">Hello! I am PlantEase AI, your personal farming assistant. How can I help you today?</div>
+                        </div>
+                    </div>
+
+                    <div class="chat-preview-area" id="chat-preview-area" style="display: none;">
+                        <img id="chat-img-preview" src="" alt="Attachment Preview">
+                        <button id="remove-chat-img" class="btn-secondary" title="Remove attachment"><i
+                                class="ph-bold ph-x"></i></button>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <input type="file" id="chat-file-input" accept="image/jpeg, image/png, image/jpg" hidden>
+                        <button id="chat-img-btn" class="btn-icon" title="Attach Image"><i
+                                class="ph-bold ph-image"></i></button>
+                        <button id="chat-voice-btn" class="btn-icon" title="Voice Input"><i
+                                class="ph-bold ph-microphone"></i></button>
+                        <input type="text" id="chat-input"
+                            placeholder="Ask a farming question..." data-i18n-placeholder="chatInputPlaceholder">
+                        <button id="send-btn" class="btn-primary"><i class="ph-bold ph-paper-plane-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Advisory Section -->
+            <div id="weather-section" class="tab-section" style="display: none;">
+                <header>
+                    <h1 data-i18n="weatherTitle">Weather & Crop Advisory</h1>
+                    <p data-i18n="weatherSubtitle">Get a 15-day forecast and AI-generated farming advice for your location.</p>
+                </header>
+
+                <div class="weather-search">
+                    <div class="search-input-group">
+                        <input type="text" id="location-input" placeholder="Enter City Name..." data-i18n-placeholder="cityInputPlaceholder">
+                        <button id="weather-voice-btn" class="btn-icon" title="Voice Search"><i
+                                class="ph-bold ph-microphone"></i></button>
+                    </div>
+                    <button id="weather-btn" class="btn-primary"><i class="ph-bold ph-magnifying-glass"></i> <span data-i18n="checkWeatherBtn">Check Weather</span></button>
+                </div>
+
+                <div class="loader-container" id="weather-loader" style="display: none;">
+                    <div class="spinner"></div>
+                    <p data-i18n="loadingWeather">Fetching forecast and generating advisory...</p>
+                </div>
+
+                <div class="weather-results" id="weather-results" style="display: none;">
+                    <div class="weather-card">
+                        <div class="w-header">
+                            <i class="ph ph-thermometer"></i>
+                            <h3>Current Weather</h3>
+                        </div>
+                        <div class="w-stats">
+                            <h2 id="w-temp">--°C</h2>
+                            <p id="w-desc">--</p>
+                            <p>Humidity: <span id="w-humidity">--</span>%</p>
+                        </div>
+                    </div>
+
+                    <div class="forecast-section">
+                        <h3>3-Day Forecast</h3>
+                        <div class="forecast-grid" id="forecast-grid">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <div class="advisory-card">
+                        <div class="a-header">
+                            <i class="ph ph-lightbulb"></i>
+                            <h3>AI Crop Advisory</h3>
+                        </div>
+                        <div class="a-content" id="w-advisory">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crop Guidebook Section -->
+            <div id="guidebook-section" class="tab-section" style="display: none;">
+                <header>
+                    <h1 data-i18n="guidebookTitle">Crop Guidebook Generator</h1>
+                    <p data-i18n="guidebookSubtitle">Enter the crop you want to sow and your soil type to generate a detailed, zero-to-hero farming guide that you can download as a PDF.</p>
+                </header>
+
+                <div class="guidebook-search">
+                    <div class="input-row">
+                        <div class="search-input-group">
+                            <input type="text" id="crop-input" placeholder="Crop Name (e.g., Wheat)" data-i18n-placeholder="cropInputPlaceholder">
+                            <button id="crop-voice-btn" class="btn-icon" title="Voice Search"><i class="ph-bold ph-microphone"></i></button>
+                        </div>
+                        <div class="search-input-group">
+                            <input type="text" id="soil-input" placeholder="Soil Type (e.g., Loamy)" data-i18n-placeholder="soilInputPlaceholder">
+                            <button id="soil-voice-btn" class="btn-icon" title="Voice Search"><i class="ph-bold ph-microphone"></i></button>
+                        </div>
+                    </div>
+                    <div class="input-row" style="align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 1rem;">
+                        <button id="generate-guide-btn" class="btn-primary" style="flex: 1; justify-content: center;"><i class="ph-bold ph-magic-wand"></i> <span data-i18n="generateGuideBtn">Generate Guidebook</span></button>
+                    </div>
+                </div>
+
+                <div class="loader-container" id="guidebook-loader" style="display: none;">
+                    <div class="spinner"></div>
+                    <p data-i18n="loadingGuidebook">Writing your comprehensive guidebook...</p>
+                </div>
+
+                <div class="guidebook-results" id="guidebook-results" style="display: none;">
+                    <div class="action-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+                        <button id="download-pdf-btn" class="btn-primary" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
+                    </div>
+                    
+                    <div class="guidebook-document" id="guidebook-document">
+                        <!-- Content will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Farming Economics Section -->
+            <div id="economics-section" class="tab-section" style="display: none;">
+                <header>
+                    <h1 data-i18n="economicsTitle">Farming Economics Calculator</h1>
+                    <p data-i18n="economicsSubtitle">Enter your crop and land size to get a detailed estimate of projected costs, revenue, and net profit based on current market trends.</p>
+                </header>
+
+                <div class="economics-search">
+                    <div class="input-row">
+                        <div class="search-input-group">
+                            <input type="text" id="eco-crop-input" placeholder="Crop Name (e.g., Cotton)" data-i18n-placeholder="ecoCropInputPlaceholder">
+                            <button id="eco-crop-voice-btn" class="btn-icon" title="Voice Search"><i class="ph-bold ph-microphone"></i></button>
+                        </div>
+                        <div class="search-input-group" style="flex: 0.5;">
+                            <input type="number" id="eco-size-input" placeholder="Land Size (e.g., 5)" data-i18n-placeholder="ecoSizeInputPlaceholder" min="0.1" step="0.1">
+                        </div>
+                        <select id="eco-unit-select" class="language-select" style="flex: 0.5;">
+                            <option value="Acres">Acres</option>
+                            <option value="Hectares">Hectares</option>
+                        </select>
+                    </div>
+                    <div class="input-row" style="justify-content: flex-end;">
+                        <button id="calculate-eco-btn" class="btn-primary" style="flex: 1; justify-content: center;"><i class="ph-bold ph-calculator"></i> <span data-i18n="calculateEcoBtn">Calculate Economics</span></button>
+                    </div>
+                </div>
+
+                <div class="loader-container" id="economics-loader" style="display: none;">
+                    <div class="spinner"></div>
+                    <p data-i18n="loadingEconomics">Analyzing market trends and calculating costs...</p>
+                </div>
+
+                <div class="economics-results" id="economics-results" style="display: none;">
+                    <div class="action-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+                        <button id="eco-download-pdf-btn" class="btn-primary" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
+                    </div>
+                    <div class="economics-document" id="economics-document">
+                        <!-- Content will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Markdown Parser for AI Responses -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- html2pdf for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/translations.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+
+</html>
