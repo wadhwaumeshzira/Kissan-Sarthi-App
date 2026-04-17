@@ -232,9 +232,12 @@ body::before {
 /* Main Content */
 .main-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     padding: 3rem;
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 header {
@@ -1051,6 +1054,78 @@ button:disabled {
 
 .economics-document strong {
     color: #047857;
+}
+
+/* --- Developer Credits --- */
+.developer-credits {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 3rem;
+    margin-top: 3rem;
+    padding: 1.5rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.developer-credits.global-credits {
+    margin-top: auto; /* Push to bottom if content is short */
+    margin-bottom: 0;
+}
+
+.credit-card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.credit-avatar-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.credit-avatar {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    border: 3px solid white;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.credit-avatar.female {
+    background-color: #fce7f3; /* soft pink */
+}
+
+.credit-avatar.male {
+    background-color: #e0f2fe; /* soft blue */
+}
+
+.credit-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.credit-details h4 {
+    margin: 0.2rem 0 0 0;
+    font-size: 1.15rem;
+    color: var(--text-dark);
+    font-weight: 700;
+}
+
+.credit-details p.credit-role {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #6366f1; /* Indigo/Purple color for role */
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 /* --- Mobile Responsiveness --- */
