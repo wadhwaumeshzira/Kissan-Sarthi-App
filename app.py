@@ -228,9 +228,10 @@ def weather_advisory():
         Here is the forecast for the upcoming days:
         {forecast_text}
         
-        Based on this weather outlook, please provide a detailed agricultural advisory structured exactly with these three headings:
+        Based on this weather outlook, please provide a concise agricultural advisory (under 200 words) structured exactly with these three headings:
         
-        ### 1. Recommended Actions for Farmers
+        ### 1. Recommended Actions
+
         (Provide 2-3 immediate, actionable steps farmers should take right now based on the current weather and upcoming forecast.)
         
         ### 2. Precautions for Current Crops
@@ -273,28 +274,29 @@ def guidebook():
     
     try:
         prompt = f"""You are a master agronomist. The user wants to grow '{crop}' in '{soil}' soil. 
-        Generate a comprehensive, colorful, zero-to-hero "Crop Farming Guidebook".
-        Use extensive Markdown formatting (Headers like #, ##, tables, bold text, bullet points) to make it look like a highly professional PDF document.
+        Generate a "Crop Farming Guidebook" that is approximately 3 to 4 pages long.
+        Use Markdown formatting (Headers like #, ##, tables, bold text, bullet points).
+        Keep your descriptions concise, clear, and to the point to avoid making the document too long.
         
         CRITICAL: The ENTIRE guidebook must be written in {language}.
         
-        Must include the following sections exactly:
+        Must include the following sections:
         # {crop.title()} Cultivation Guide
         
         ## 1. Soil Preparation & Sowing
-        (Explain how to treat this specific {soil} soil before sowing, exact depth, and spacing for the seeds).
+        (Briefly explain soil treatment, plowing, depth, and spacing).
         
-        ## 2. Recommended Fertilizers
-        (Provide specific organic/chemical fertilizer names, NPK ratios, and exact times of application).
+        ## 2. Recommended Fertilizers & Nutrition
+        (List exact organic and chemical fertilizer names, NPK ratios, and a timeline of when to apply them).
         
-        ## 3. Day-by-Day / Week-by-Week Schedule
-        (Create a Markdown Table showing a timeline from Day 1 to Harvest. Include columns for 'Timeline', 'Stage', and 'Action Required').
+        ## 3. Growth Schedule
+        (Create a Markdown Table showing a timeline from Day 1 to Harvest).
         
         ## 4. Pest & Disease Management
-        (List top 2 common diseases for this crop and how to prevent them organically).
+        (Detail 2-3 common diseases/pests and their remedies).
         
-        ## 5. Harvesting Guidelines
-        (How to know it's ready, and exact steps to harvest).
+        ## 5. Harvesting & Storage
+        (Steps to harvest and post-harvest storage).
         
         ## 6. Executive Summary
         (A final 1-page summary stating the key points, total estimated duration from sowing to harvest, and the absolute best methods for success).
