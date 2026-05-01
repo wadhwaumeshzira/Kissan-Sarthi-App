@@ -23,7 +23,10 @@ designed to empower Indian farmers with intelligent crop management tools.
 - **Other:** gTTS, ReportLab (PDF generation)
 
 ## 📸 Demo
-[Add your GIF here]
+<img width="1107" height="720" alt="Kissan-SarthiDemo-ezgif com-video-to-gif-converter (1)" src="https://github.com/user-attachments/assets/8243a6a6-673e-4412-883e-eb58ede2c180" />
+
+
+
 
 ## ⚙️ Setup
 ```bash
