@@ -57,6 +57,9 @@ except Exception as e:
 @app.route('/')
 def home():
     return render_template('index.html')
+@app.route('/ping')
+def ping():
+    return 'pong'
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
