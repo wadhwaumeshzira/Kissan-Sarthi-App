@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=5">
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='images/watermark.jpg') }}">
     <!-- Phosphor Icons for modern UI icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -164,7 +164,6 @@
                                 <h2 data-i18n="predictionText">Analysis Result</h2>
                             </div>
                             <h3 id="prediction-text">Apple - Healthy</h3>
-                            <button class="btn-secondary listen-btn" data-listen-target="results"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         </div>
 
                         <div class="recommendations-grid">
@@ -277,7 +276,6 @@
                         <div class="a-header">
                             <i class="ph ph-lightbulb"></i>
                             <h3>AI Crop Advisory</h3>
-                            <button class="btn-secondary listen-btn" data-listen-target="w-advisory" style="margin-left: auto;"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         </div>
                         <div class="a-content" id="w-advisory">
                             <!-- Populated by JS -->
@@ -328,7 +326,6 @@
                         </div>
                     </div>
                     <div class="action-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
-                        <button class="btn-secondary listen-btn" data-listen-target="guidebook-document"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         <button id="download-pdf-btn" class="btn-primary" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
                     </div>
                     
@@ -371,7 +368,6 @@
 
                 <div class="economics-results" id="economics-results" style="display: none;">
                     <div class="action-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
-                        <button class="btn-secondary listen-btn" data-listen-target="economics-document"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         <button id="eco-download-pdf-btn" class="btn-primary" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
                     </div>
                     <div class="economics-document" id="economics-document">
@@ -437,7 +433,6 @@
 
                 <div class="economics-results" id="schemes-results" style="display: none;">
                     <div class="action-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
-                        <button class="btn-secondary listen-btn" data-listen-target="schemes-document"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         <button id="schemes-pdf-btn" class="btn-primary" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
                     </div>
                     <div class="guidebook-document" id="schemes-document">
@@ -478,7 +473,6 @@
                         <button class="btn-secondary" id="history-back-btn"><i class="ph-bold ph-arrow-left"></i> <span data-i18n="historyBack">Back to History</span></button>
                         <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                             <button class="btn-secondary" id="history-follow-btn" style="display: none;"><i class="ph-bold ph-calendar-plus"></i> <span data-i18n="followBtn">Follow this plan</span></button>
-                            <button class="btn-secondary listen-btn" id="history-listen-btn" data-listen-target="history-document"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                             <button class="btn-primary" id="history-pdf-btn" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
                         </div>
                     </div>
@@ -510,8 +504,8 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- html2pdf for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/translations.js') }}?v=4"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='js/translations.js') }}?v=5"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=5"></script>
 </body>
 
 </html>

@@ -77,8 +77,6 @@ const translations = {
         "historyBack": "Back to History",
         "historyDelete": "Delete",
 
-        "listenBtn": "Listen",
-        "stopBtn": "Stop",
         "chatMemoryHint": "I remember this conversation until you start a new chat.",
         "newChatBtn": "New chat",
 
@@ -196,8 +194,6 @@ const translations = {
         "historyBack": "इतिहास पर वापस जाएं",
         "historyDelete": "हटाएं",
 
-        "listenBtn": "सुनें",
-        "stopBtn": "रोकें",
         "chatMemoryHint": "नई चैट शुरू करने तक मुझे यह बातचीत याद रहेगी।",
         "newChatBtn": "नई चैट",
 
@@ -315,8 +311,6 @@ const translations = {
         "historyBack": "ਇਤਿਹਾਸ ਤੇ ਵਾਪਸ ਜਾਓ",
         "historyDelete": "ਹਟਾਓ",
 
-        "listenBtn": "ਸੁਣੋ",
-        "stopBtn": "ਰੋਕੋ",
         "chatMemoryHint": "ਨਵੀਂ ਚੈਟ ਸ਼ੁਰੂ ਕਰਨ ਤੱਕ ਮੈਨੂੰ ਇਹ ਗੱਲਬਾਤ ਯਾਦ ਰਹੇਗੀ।",
         "newChatBtn": "ਨਵੀਂ ਚੈਟ",
 

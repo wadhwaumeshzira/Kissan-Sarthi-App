@@ -1470,28 +1470,6 @@ button:disabled {
     }
 }
 
-/* ---------- Voice replies ---------- */
-.listen-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-}
-
-.listen-btn.speaking {
-    background: var(--primary-light);
-    color: var(--primary-dark);
-    border-color: var(--primary);
-}
-
-.chat-listen {
-    margin-top: 0.75rem;
-    padding: 0.35rem 0.8rem;
-    font-size: 0.8rem;
-}
-
-.prediction-card .listen-btn {
-    margin-top: 1rem;
-}
-
 .chat-toolbar {
     display: flex;
     align-items: center;

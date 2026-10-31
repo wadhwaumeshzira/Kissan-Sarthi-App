@@ -22,105 +22,6 @@ function t(key, vars = {}) {
     return text;
 }
 
-// --- Voice replies: reads text aloud via /api/tts in chunks, fetching the next chunk while one plays ---
-const voicePlayer = {
-    audio: new Audio(),
-    activeBtn: null,
-    runId: 0,
-
-    splitIntoChunks(text, maxLen = 1200) {
-        const sentences = text.replace(/\s+/g, ' ').match(/[^.!?।\n]+[.!?।]*\s*/g) || [text];
-        const chunks = [];
-        let current = '';
-        sentences.forEach(s => {
-            if ((current + s).length > maxLen && current) {
-                chunks.push(current);
-                current = '';
-            }
-            // A single very long sentence is hard-split
-            while (s.length > maxLen) {
-                chunks.push(s.slice(0, maxLen));
-                s = s.slice(maxLen);
-            }
-            current += s;
-        });
-        if (current.trim()) chunks.push(current);
-        return chunks;
-    },
-
-    async fetchAudio(text, language) {
-        const response = await fetch('/api/tts', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text, language })
-        });
-        if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
-            throw new Error(data.error || 'Voice service unavailable');
-        }
-        return URL.createObjectURL(await response.blob());
-    },
-
-    setButton(btn, playing) {
-        if (!btn) return;
-        btn.classList.toggle('speaking', playing);
-        btn.innerHTML = playing
-            ? `<i class="ph-bold ph-stop-circle"></i> <span>${t('stopBtn')}</span>`
-            : `<i class="ph-bold ph-speaker-high"></i> <span>${t('listenBtn')}</span>`;
-    },
-
-    stop() {
-        this.runId++;
-        this.audio.pause();
-        this.setButton(this.activeBtn, false);
-        this.activeBtn = null;
-    },
-
-    async speak(text, language, btn) {
-        const wasActive = this.activeBtn === btn;
-        this.stop();
-        if (wasActive || !text.trim()) return; // second click on the same button = stop
-
-        const runId = this.runId;
-        this.activeBtn = btn;
-        this.setButton(btn, true);
-
-        const chunks = this.splitIntoChunks(text);
-        try {
-            let next = this.fetchAudio(chunks[0], language);
-            for (let i = 0; i < chunks.length; i++) {
-                const url = await next;
-                if (runId !== this.runId) return;
-                if (i + 1 < chunks.length) next = this.fetchAudio(chunks[i + 1], language);
-                this.audio.src = url;
-                await this.audio.play();
-                await new Promise(resolve => { this.audio.onended = resolve; this.audio.onpause = resolve; });
-                URL.revokeObjectURL(url);
-                if (runId !== this.runId) return;
-            }
-        } catch (error) {
-            if (runId === this.runId) alert(error.message);
-        }
-        if (runId === this.runId) this.stop();
-    }
-};
-
-// Visible text of an element, without the labels of buttons inside it
-function speakableText(el) {
-    const buttons = el.querySelectorAll('button');
-    buttons.forEach(b => { b.dataset.prevDisplay = b.style.display; b.style.display = 'none'; });
-    const text = el.innerText;
-    buttons.forEach(b => { b.style.display = b.dataset.prevDisplay; });
-    return text;
-}
-
-document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.listen-btn[data-listen-target]');
-    if (!btn) return;
-    const target = document.getElementById(btn.dataset.listenTarget);
-    if (target) voicePlayer.speak(speakableText(target), target.dataset.lang || window.globalLang, btn);
-});
-
 document.addEventListener('DOMContentLoaded', () => {
     // Global Language State (shared with the login page)
     window.globalLang = 'en';
@@ -369,7 +270,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (targetId === 'home-section' && window.loadPlans) {
             window.loadPlans();
         }
-        voicePlayer.stop();
     }
 
     navLinks.forEach(link => {
@@ -477,12 +377,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('new-chat-btn').addEventListener('click', () => {
         chatHistory = [];
-        voicePlayer.stop();
         chatBox.innerHTML = chatGreetingHtml;
         updateTranslations(window.globalLang);
     });
 
-    function appendMessage(sender, text, imgSrc = null, speakable = false) {
+    function appendMessage(sender, text, imgSrc = null) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `chat-message ${sender}`;
         
@@ -505,15 +404,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         content.innerHTML = innerHtml;
-
-        if (speakable) {
-            const lang = window.globalLang;
-            const listenBtn = document.createElement('button');
-            listenBtn.className = 'btn-secondary listen-btn chat-listen';
-            listenBtn.innerHTML = `<i class="ph-bold ph-speaker-high"></i> <span>${t('listenBtn')}</span>`;
-            listenBtn.addEventListener('click', () => voicePlayer.speak(speakableText(content), lang, listenBtn));
-            content.appendChild(listenBtn);
-        }
 
         msgDiv.appendChild(avatar);
         msgDiv.appendChild(content);
@@ -562,7 +452,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!response.ok) throw new Error(data.error || 'Failed to get response');
             
-            appendMessage('bot', data.reply, null, true);
+            appendMessage('bot', data.reply);
             chatHistory.push(
                 { role: 'user', text: msgToSend || '(sent a photo)' },
                 { role: 'assistant', text: data.reply }
@@ -969,7 +859,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showHistoryList() {
-        voicePlayer.stop();
         historyDetailView.style.display = 'none';
         historyListView.style.display = 'block';
         currentHistoryItem = null;
@@ -1183,7 +1072,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="plan-actions">
                     <button class="btn-secondary" data-action="toggle"><i class="ph ph-list-checks"></i> ${expanded ? t('planHideAll') : t('planViewAll')}</button>
                     <button class="btn-secondary" data-action="guide"><i class="ph ph-book-open"></i> ${t('planViewGuide')}</button>
-                    <button class="btn-secondary listen-btn" data-action="listen"><i class="ph-bold ph-speaker-high"></i> <span>${t('listenBtn')}</span></button>
                     <button class="btn-secondary plan-stop" data-action="stop"><i class="ph ph-x-circle"></i> ${t('planStop')}</button>
                 </div>
             </div>`;
@@ -1239,8 +1127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btn.dataset.action === 'toggle') {
             expandedPlans.has(plan.id) ? expandedPlans.delete(plan.id) : expandedPlans.add(plan.id);
             window.renderPlans();
-        } else if (btn.dataset.action === 'listen') {
-            voicePlayer.speak(speakableText(card.querySelector('.plan-body')), plan.language, btn);
         } else if (btn.dataset.action === 'stop') {
             if (!confirm(t('planStopConfirm', { crop: plan.crop }))) return;
             const response = await fetch(`/api/plans/${plan.id}`, { method: 'DELETE' });

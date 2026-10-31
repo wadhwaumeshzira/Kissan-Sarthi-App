@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for, Response
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for
 import os
 import re
 import requests
@@ -18,7 +18,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from utils.disease_info import disease_remedies, disease_fertilizers
 from utils.db import get_db, now_utc, DatabaseNotConfigured, HISTORY_TTL_DAYS
 from utils.auth import login_required, current_user_id, save_history, HISTORY_TYPES
-from utils.tts import clean_for_speech, synthesize, MAX_TTS_CHARS
 from utils.plans import extract_tasks, plan_view, parse_date, today_ist, MAX_ACTIVE_PLANS
 from utils.schemes import CENTRAL_SCHEMES, SCHEME_NEEDS
 
@@ -549,22 +548,6 @@ def economics():
     except Exception as e:
         print(f"Economics error: {e}")
         return jsonify({"error": str(e)}), 500
-
-# --- Voice replies (free Google TTS via gTTS) ---
-
-@app.route('/api/tts', methods=['POST'])
-@login_required
-def tts():
-    data = request.json or {}
-    text = clean_for_speech(data.get('text') or '')[:MAX_TTS_CHARS]
-    if not text:
-        return jsonify({"error": "Nothing to read aloud."}), 400
-    try:
-        audio = synthesize(text, data.get('language', 'en'))
-    except Exception as e:
-        print(f"TTS error: {e}")
-        return jsonify({"error": "Voice service is unavailable right now. Please try again."}), 502
-    return Response(audio, mimetype='audio/mpeg')
 
 # --- Followed crop plans (from a guidebook) shown on the home dashboard ---
 
