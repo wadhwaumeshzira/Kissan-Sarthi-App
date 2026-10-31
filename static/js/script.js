@@ -1,6 +1,130 @@
+// Send the user back to the login page if their session has expired
+const originalFetch = window.fetch.bind(window);
+window.fetch = async (...args) => {
+    const response = await originalFetch(...args);
+    if (response.status === 401 && !String(args[0]).startsWith('/api/auth/')) {
+        window.location.href = '/login';
+    }
+    return response;
+};
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text == null ? '' : String(text);
+    return div.innerHTML;
+}
+
+// Translate a key for text built in JS, with {placeholders}
+function t(key, vars = {}) {
+    const lang = (typeof translations !== 'undefined' && translations[window.globalLang]) || {};
+    let text = lang[key] || (translations.en && translations.en[key]) || key;
+    Object.entries(vars).forEach(([k, v]) => { text = text.replace(`{${k}}`, v); });
+    return text;
+}
+
+// --- Voice replies: reads text aloud via /api/tts in chunks, fetching the next chunk while one plays ---
+const voicePlayer = {
+    audio: new Audio(),
+    activeBtn: null,
+    runId: 0,
+
+    splitIntoChunks(text, maxLen = 1200) {
+        const sentences = text.replace(/\s+/g, ' ').match(/[^.!?।\n]+[.!?।]*\s*/g) || [text];
+        const chunks = [];
+        let current = '';
+        sentences.forEach(s => {
+            if ((current + s).length > maxLen && current) {
+                chunks.push(current);
+                current = '';
+            }
+            // A single very long sentence is hard-split
+            while (s.length > maxLen) {
+                chunks.push(s.slice(0, maxLen));
+                s = s.slice(maxLen);
+            }
+            current += s;
+        });
+        if (current.trim()) chunks.push(current);
+        return chunks;
+    },
+
+    async fetchAudio(text, language) {
+        const response = await fetch('/api/tts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, language })
+        });
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Voice service unavailable');
+        }
+        return URL.createObjectURL(await response.blob());
+    },
+
+    setButton(btn, playing) {
+        if (!btn) return;
+        btn.classList.toggle('speaking', playing);
+        btn.innerHTML = playing
+            ? `<i class="ph-bold ph-stop-circle"></i> <span>${t('stopBtn')}</span>`
+            : `<i class="ph-bold ph-speaker-high"></i> <span>${t('listenBtn')}</span>`;
+    },
+
+    stop() {
+        this.runId++;
+        this.audio.pause();
+        this.setButton(this.activeBtn, false);
+        this.activeBtn = null;
+    },
+
+    async speak(text, language, btn) {
+        const wasActive = this.activeBtn === btn;
+        this.stop();
+        if (wasActive || !text.trim()) return; // second click on the same button = stop
+
+        const runId = this.runId;
+        this.activeBtn = btn;
+        this.setButton(btn, true);
+
+        const chunks = this.splitIntoChunks(text);
+        try {
+            let next = this.fetchAudio(chunks[0], language);
+            for (let i = 0; i < chunks.length; i++) {
+                const url = await next;
+                if (runId !== this.runId) return;
+                if (i + 1 < chunks.length) next = this.fetchAudio(chunks[i + 1], language);
+                this.audio.src = url;
+                await this.audio.play();
+                await new Promise(resolve => { this.audio.onended = resolve; this.audio.onpause = resolve; });
+                URL.revokeObjectURL(url);
+                if (runId !== this.runId) return;
+            }
+        } catch (error) {
+            if (runId === this.runId) alert(error.message);
+        }
+        if (runId === this.runId) this.stop();
+    }
+};
+
+// Visible text of an element, without the labels of buttons inside it
+function speakableText(el) {
+    const buttons = el.querySelectorAll('button');
+    buttons.forEach(b => { b.dataset.prevDisplay = b.style.display; b.style.display = 'none'; });
+    const text = el.innerText;
+    buttons.forEach(b => { b.style.display = b.dataset.prevDisplay; });
+    return text;
+}
+
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.listen-btn[data-listen-target]');
+    if (!btn) return;
+    const target = document.getElementById(btn.dataset.listenTarget);
+    if (target) voicePlayer.speak(speakableText(target), target.dataset.lang || window.globalLang, btn);
+});
+
 document.addEventListener('DOMContentLoaded', () => {
-    // Global Language State
+    // Global Language State (shared with the login page)
     window.globalLang = 'en';
+    try { window.globalLang = localStorage.getItem('ks-lang') || 'en'; } catch (e) {}
     const langSelect = document.getElementById('global-language');
     const homeLangSelect = document.getElementById('home-language');
 
@@ -35,8 +159,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function changeLanguageHandler(e) {
         window.globalLang = e.target.value;
+        try { localStorage.setItem('ks-lang', window.globalLang); } catch (err) {}
         updateTranslations(window.globalLang);
+        if (window.renderPlans) window.renderPlans();
+        if (window.renderSchemeNeeds) window.renderSchemeNeeds();
     }
+
+    // --- Logout ---
+    document.querySelectorAll('.logout-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/login';
+        });
+    });
 
     if (langSelect) langSelect.addEventListener('change', changeLanguageHandler);
     if (homeLangSelect) homeLangSelect.addEventListener('change', changeLanguageHandler);
@@ -140,6 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = new FormData();
         formData.append('image', currentFile);
+        formData.append('language', window.globalLang);
 
         try {
             const response = await fetch('/api/predict', {
@@ -176,7 +312,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Set text
-        predictionText.textContent = data.prediction;
+        predictionText.textContent = data.translated_prediction || data.prediction;
+        resultsSection.dataset.lang = data.translated_prediction ? window.globalLang : 'en';
 
         // Populate Remedies
         remediesList.innerHTML = '';
@@ -225,6 +362,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             sidebar.style.display = 'flex';
         }
+
+        if (targetId === 'history-section' && window.loadHistory) {
+            window.loadHistory();
+        }
+        if (targetId === 'home-section' && window.loadPlans) {
+            window.loadPlans();
+        }
+        voicePlayer.stop();
     }
 
     navLinks.forEach(link => {
@@ -326,7 +471,18 @@ document.addEventListener('DOMContentLoaded', () => {
         imgPreview.src = '';
     });
 
-    function appendMessage(sender, text, imgSrc = null) {
+    // Messages of the current chat session, sent with each question so follow-ups have context
+    let chatHistory = [];
+    const chatGreetingHtml = chatBox.innerHTML;
+
+    document.getElementById('new-chat-btn').addEventListener('click', () => {
+        chatHistory = [];
+        voicePlayer.stop();
+        chatBox.innerHTML = chatGreetingHtml;
+        updateTranslations(window.globalLang);
+    });
+
+    function appendMessage(sender, text, imgSrc = null, speakable = false) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `chat-message ${sender}`;
         
@@ -349,7 +505,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         content.innerHTML = innerHtml;
-        
+
+        if (speakable) {
+            const lang = window.globalLang;
+            const listenBtn = document.createElement('button');
+            listenBtn.className = 'btn-secondary listen-btn chat-listen';
+            listenBtn.innerHTML = `<i class="ph-bold ph-speaker-high"></i> <span>${t('listenBtn')}</span>`;
+            listenBtn.addEventListener('click', () => voicePlayer.speak(speakableText(content), lang, listenBtn));
+            content.appendChild(listenBtn);
+        }
+
         msgDiv.appendChild(avatar);
         msgDiv.appendChild(content);
         chatBox.appendChild(msgDiv);
@@ -383,6 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (msgToSend) formData.append('message', msgToSend);
             if (fileToSend) formData.append('image', fileToSend);
             formData.append('language', window.globalLang);
+            formData.append('history', JSON.stringify(chatHistory));
 
             const response = await fetch('/api/chat', {
                 method: 'POST',
@@ -396,7 +562,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!response.ok) throw new Error(data.error || 'Failed to get response');
             
-            appendMessage('bot', data.reply);
+            appendMessage('bot', data.reply, null, true);
+            chatHistory.push(
+                { role: 'user', text: msgToSend || '(sent a photo)' },
+                { role: 'assistant', text: data.reply }
+            );
         } catch (error) {
             chatBox.removeChild(loadingMsg);
             appendMessage('bot', `**Error:** ${error.message}`);
@@ -515,6 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Populate Advisory
             wAdvisory.innerHTML = window.marked ? marked.parse(data.advisory) : data.advisory;
+            wAdvisory.dataset.lang = window.globalLang;
             
             // Show results
             weatherResults.style.display = 'flex';
@@ -597,6 +768,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(data.error || 'Failed to generate guidebook');
 
             guidebookDocument.innerHTML = window.marked ? marked.parse(data.guide) : data.guide;
+            guidebookDocument.dataset.lang = window.globalLang;
+            showFollowBox(data.history_id);
             guidebookResults.style.display = 'block';
             
         } catch (error) {
@@ -604,6 +777,52 @@ document.addEventListener('DOMContentLoaded', () => {
         } finally {
             guidebookLoader.style.display = 'none';
         }
+    });
+
+    // --- Follow a guidebook as a day-by-day crop plan ---
+    const followBox = document.getElementById('follow-box');
+    const followDate = document.getElementById('follow-date');
+    const followBtn = document.getElementById('follow-btn');
+    let guideHistoryId = null;
+
+    function localDateString(date = new Date()) {
+        const pad = n => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    }
+
+    // historyId is null when the guide could not be saved (e.g. database down) — then it can't be followed
+    function showFollowBox(historyId) {
+        guideHistoryId = historyId;
+        followBox.style.display = historyId ? 'flex' : 'none';
+        followDate.value = localDateString();
+        followBtn.disabled = false;
+        followBtn.innerHTML = `<i class="ph-bold ph-check-circle"></i> <span>${t('followBtn')}</span>`;
+    }
+
+    // Shared by the guidebook page and the history detail page
+    async function followGuide(historyId, startDate, btn) {
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<i class="ph ph-spinner spin"></i> <span>${t('followCreating')}</span>`;
+        try {
+            const response = await fetch('/api/plans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ history_id: historyId, start_date: startDate })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to follow plan');
+            btn.innerHTML = `<i class="ph-bold ph-check"></i> <span>${t('followingMsg')}</span>`;
+            if (window.loadPlans) window.loadPlans();
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
+
+    followBtn.addEventListener('click', () => {
+        if (guideHistoryId) followGuide(guideHistoryId, followDate.value, followBtn);
     });
 
     // PDF Download Logic
@@ -677,6 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error(data.error || 'Failed to calculate economics');
 
             economicsDocument.innerHTML = window.marked ? marked.parse(data.report) : data.report;
+            economicsDocument.dataset.lang = window.globalLang;
             economicsResults.style.display = 'block';
             
         } catch (error) {
@@ -716,4 +936,408 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    // --- History Logic ---
+    const historyListView = document.getElementById('history-list-view');
+    const historyDetailView = document.getElementById('history-detail-view');
+    const historyList = document.getElementById('history-list');
+    const historyLoader = document.getElementById('history-loader');
+    const historyEmpty = document.getElementById('history-empty');
+    const historyDocument = document.getElementById('history-document');
+    const historyBackBtn = document.getElementById('history-back-btn');
+    const historyPdfBtn = document.getElementById('history-pdf-btn');
+    const historyFilters = document.querySelectorAll('.history-filter');
+
+    const HISTORY_ICONS = {
+        disease: 'ph-scan',
+        chat: 'ph-robot',
+        weather: 'ph-cloud-sun',
+        guidebook: 'ph-book-open',
+        economics: 'ph-chart-line-up',
+        schemes: 'ph-bank'
+    };
+    const historyFollowBtn = document.getElementById('history-follow-btn');
+    let historyType = '';
+    let currentHistoryItem = null;
+
+    function formatDate(iso) {
+        return new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+
+    function daysLeft(iso) {
+        return Math.max(0, Math.ceil((new Date(iso) - Date.now()) / 86400000));
+    }
+
+    function showHistoryList() {
+        voicePlayer.stop();
+        historyDetailView.style.display = 'none';
+        historyListView.style.display = 'block';
+        currentHistoryItem = null;
+    }
+
+    window.loadHistory = async function () {
+        showHistoryList();
+        historyLoader.style.display = 'flex';
+        historyEmpty.style.display = 'none';
+        historyList.innerHTML = '';
+
+        try {
+            const url = historyType ? `/api/history?type=${historyType}` : '/api/history';
+            const response = await fetch(url);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to load history');
+
+            if (data.items.length === 0) {
+                historyEmpty.style.display = 'block';
+                return;
+            }
+
+            data.items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'history-item';
+                row.innerHTML = `
+                    <div class="history-item-icon"><i class="ph ${HISTORY_ICONS[item.type] || 'ph-file'}"></i></div>
+                    <div class="history-item-body">
+                        <h4>${escapeHtml(item.title)}</h4>
+                        <p>${formatDate(item.created_at)} · auto-deletes in ${daysLeft(item.expires_at)} days</p>
+                    </div>
+                    <button class="btn-icon history-delete" title="Delete"><i class="ph ph-trash"></i></button>
+                `;
+                row.addEventListener('click', () => openHistoryItem(item.id));
+                row.querySelector('.history-delete').addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (!confirm('Delete this item from your history?')) return;
+                    const res = await fetch(`/api/history/${item.id}`, { method: 'DELETE' });
+                    if (res.ok) {
+                        row.remove();
+                        if (!historyList.children.length) historyEmpty.style.display = 'block';
+                    }
+                });
+                historyList.appendChild(row);
+            });
+        } catch (error) {
+            historyList.innerHTML = `<p class="history-empty">${escapeHtml(error.message)}</p>`;
+        } finally {
+            historyLoader.style.display = 'none';
+        }
+    };
+
+    // Turn a stored history entry back into a readable markdown document
+    function historyToMarkdown(item) {
+        const out = item.output || {};
+        const inp = item.inputs || {};
+        const header = `*${escapeHtml(formatDate(item.created_at))}*\n\n`;
+        const list = (arr) => (arr || []).map(x => `- ${escapeHtml(x)}`).join('\n');
+
+        switch (item.type) {
+            case 'disease':
+                return `# ${escapeHtml(item.title)}\n\n${header}` +
+                    `**Image:** ${escapeHtml(inp.filename)}\n\n` +
+                    `## Organic Remedies\n${list(out.remedies)}\n\n## Recommended Fertilizers\n${list(out.fertilizers)}`;
+            case 'chat':
+                return `# AI Assistant\n\n${header}### Question\n${escapeHtml(inp.message || '(image only)')}` +
+                    `${inp.has_image ? ' 📷' : ''}\n\n### Answer\n${out.reply || ''}`;
+            case 'weather': {
+                const w = out.weather || {};
+                const rows = (out.forecast || []).map(d =>
+                    `| ${escapeHtml(d.date)} | ${escapeHtml(d.condition)} | ${d.min_temp}° / ${d.max_temp}° |`).join('\n');
+                return `# ${escapeHtml(item.title)}\n\n${header}` +
+                    `**Current:** ${w.temp}°C, ${escapeHtml(w.description)}, Humidity ${w.humidity}%\n\n` +
+                    (rows ? `## Forecast\n| Date | Condition | Min / Max |\n|---|---|---|\n${rows}\n\n` : '') +
+                    `## AI Crop Advisory\n${out.advisory || ''}`;
+            }
+            case 'guidebook':
+                return `${header}${out.guide || ''}`;
+            case 'economics':
+            case 'schemes':
+                return `${header}${out.report || ''}`;
+            default:
+                return header;
+        }
+    }
+
+    async function openHistoryItem(id) {
+        try {
+            const response = await fetch(`/api/history/${id}`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to load item');
+
+            currentHistoryItem = data.item;
+            const md = historyToMarkdown(data.item);
+            historyDocument.innerHTML = window.marked ? marked.parse(md) : escapeHtml(md);
+            historyDocument.dataset.lang = (data.item.inputs && data.item.inputs.language) || 'en';
+
+            const isGuide = data.item.type === 'guidebook';
+            historyFollowBtn.style.display = isGuide ? 'inline-flex' : 'none';
+            historyFollowBtn.disabled = false;
+            historyFollowBtn.innerHTML = `<i class="ph-bold ph-calendar-plus"></i> <span>${t('followBtn')}</span>`;
+
+            historyListView.style.display = 'none';
+            historyDetailView.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        }
+    }
+
+    historyFilters.forEach(btn => {
+        btn.addEventListener('click', () => {
+            historyFilters.forEach(b => b.classList.toggle('active', b === btn));
+            historyType = btn.dataset.type;
+            window.loadHistory();
+        });
+    });
+
+    historyBackBtn.addEventListener('click', showHistoryList);
+
+    // Saved guidebooks can be followed from history; the sowing date defaults to today
+    historyFollowBtn.addEventListener('click', () => {
+        if (!currentHistoryItem) return;
+        const date = prompt(t('sowingDatePrompt'), localDateString());
+        if (date) followGuide(currentHistoryItem.id, date, historyFollowBtn);
+    });
+
+    function downloadPdf(element, filename, btn) {
+        const opt = {
+            margin:       10,
+            filename:     filename,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollX: 0, scrollY: 0 },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="ph ph-spinner spin"></i> Generating...';
+        btn.disabled = true;
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }).catch(err => {
+            console.error('PDF Error:', err);
+            alert('Error generating PDF.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    historyPdfBtn.addEventListener('click', () => {
+        if (!currentHistoryItem) return;
+        const safeName = currentHistoryItem.title.replace(/[^\w\- ]+/g, '').trim() || 'Report';
+        downloadPdf(historyDocument, `${safeName}.pdf`, historyPdfBtn);
+    });
+
+    // --- Crop Plans Dashboard (home page) ---
+    const plansDashboard = document.getElementById('plans-dashboard');
+    const plansGrid = document.getElementById('plans-grid');
+    let plans = [];
+    const expandedPlans = new Set();
+
+    function taskHtml(plan, task) {
+        return `
+            <label class="plan-task ${task.done ? 'done' : ''}">
+                <input type="checkbox" data-plan="${plan.id}" data-index="${task.index}" ${task.done ? 'checked' : ''}>
+                <span class="plan-task-day">${t('planDayShort', { n: task.day })}</span>
+                <span class="plan-task-text"><strong>${escapeHtml(task.title)}</strong>${task.details ? `<small>${escapeHtml(task.details)}</small>` : ''}</span>
+            </label>`;
+    }
+
+    function planCardHtml(plan) {
+        const notStarted = plan.current_day < 1;
+        const dayLabel = notStarted
+            ? t('planStartsIn', { n: 1 - plan.current_day })
+            : t('planDay', { n: Math.min(plan.current_day, plan.total_days), total: plan.total_days });
+
+        let body = '';
+        if (plan.completed) {
+            body = `<p class="plan-done-msg"><i class="ph-fill ph-confetti"></i> ${t('planCompleted')}</p>`;
+        } else {
+            if (plan.overdue.length) {
+                body += `<h5 class="plan-label overdue">${t('planOverdue')}</h5>` + plan.overdue.map(task => taskHtml(plan, task)).join('');
+            }
+            body += `<h5 class="plan-label">${t('planToday')}</h5>`;
+            body += plan.today.length
+                ? plan.today.map(task => taskHtml(plan, task)).join('')
+                : `<p class="plan-empty">${t('planNoTaskToday')}</p>`;
+            if (plan.upcoming.length) {
+                body += `<h5 class="plan-label">${t('planUpcoming')}</h5>` + plan.upcoming.map(task => `
+                    <div class="plan-upcoming"><span class="plan-task-day">${t('planDayShort', { n: task.day })}</span> ${escapeHtml(task.title)}</div>`).join('');
+            }
+        }
+
+        const expanded = expandedPlans.has(plan.id);
+        return `
+            <div class="plan-card" data-plan-card="${plan.id}">
+                <div class="plan-card-header">
+                    <div>
+                        <h4><i class="ph ph-plant"></i> ${escapeHtml(plan.crop)}</h4>
+                        <p>${escapeHtml(plan.soil)} · ${t('sowingDateLabel')}: ${escapeHtml(plan.start_date)}</p>
+                    </div>
+                    <span class="plan-day-badge">${dayLabel}</span>
+                </div>
+                <div class="plan-progress"><div style="width: ${plan.progress}%"></div></div>
+                <div class="plan-body">${body}</div>
+                <div class="plan-timeline" style="display: ${expanded ? 'block' : 'none'};">
+                    ${plan.tasks.map(task => taskHtml(plan, task)).join('')}
+                </div>
+                <div class="plan-actions">
+                    <button class="btn-secondary" data-action="toggle"><i class="ph ph-list-checks"></i> ${expanded ? t('planHideAll') : t('planViewAll')}</button>
+                    <button class="btn-secondary" data-action="guide"><i class="ph ph-book-open"></i> ${t('planViewGuide')}</button>
+                    <button class="btn-secondary listen-btn" data-action="listen"><i class="ph-bold ph-speaker-high"></i> <span>${t('listenBtn')}</span></button>
+                    <button class="btn-secondary plan-stop" data-action="stop"><i class="ph ph-x-circle"></i> ${t('planStop')}</button>
+                </div>
+            </div>`;
+    }
+
+    window.renderPlans = function () {
+        plansDashboard.style.display = plans.length ? 'block' : 'none';
+        plansGrid.innerHTML = plans.map(planCardHtml).join('');
+    };
+
+    window.loadPlans = async function () {
+        try {
+            const response = await fetch('/api/plans');
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error);
+            plans = data.plans;
+            window.renderPlans();
+        } catch (error) {
+            console.error('Failed to load plans:', error);
+        }
+    };
+
+    function replacePlan(updated) {
+        plans = plans.map(p => p.id === updated.id ? updated : p);
+        window.renderPlans();
+    }
+
+    plansGrid.addEventListener('change', async (e) => {
+        const box = e.target.closest('input[type="checkbox"][data-plan]');
+        if (!box) return;
+        try {
+            const response = await fetch(`/api/plans/${box.dataset.plan}/tasks/${box.dataset.index}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ done: box.checked })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error);
+            replacePlan(data.plan);
+        } catch (error) {
+            box.checked = !box.checked;
+            alert(`Error: ${error.message}`);
+        }
+    });
+
+    plansGrid.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const card = btn.closest('[data-plan-card]');
+        const plan = plans.find(p => p.id === card.dataset.planCard);
+        if (!plan) return;
+
+        if (btn.dataset.action === 'toggle') {
+            expandedPlans.has(plan.id) ? expandedPlans.delete(plan.id) : expandedPlans.add(plan.id);
+            window.renderPlans();
+        } else if (btn.dataset.action === 'listen') {
+            voicePlayer.speak(speakableText(card.querySelector('.plan-body')), plan.language, btn);
+        } else if (btn.dataset.action === 'stop') {
+            if (!confirm(t('planStopConfirm', { crop: plan.crop }))) return;
+            const response = await fetch(`/api/plans/${plan.id}`, { method: 'DELETE' });
+            if (response.ok) {
+                plans = plans.filter(p => p.id !== plan.id);
+                window.renderPlans();
+            }
+        } else if (btn.dataset.action === 'guide') {
+            const response = await fetch(`/api/plans/${plan.id}/guide`);
+            const data = await response.json();
+            if (!response.ok) return alert(`Error: ${data.error}`);
+            guidebookDocument.innerHTML = window.marked ? marked.parse(data.guide) : escapeHtml(data.guide);
+            guidebookDocument.dataset.lang = data.language;
+            showFollowBox(null); // already following
+            guidebookResults.style.display = 'block';
+            switchTab('guidebook-section');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+
+    window.loadPlans();
+
+    // --- Government Schemes Finder ---
+    const schemeNeedsEl = document.getElementById('scheme-needs');
+    const findSchemesBtn = document.getElementById('find-schemes-btn');
+    const schemesLoader = document.getElementById('schemes-loader');
+    const schemesResults = document.getElementById('schemes-results');
+    const schemesDocument = document.getElementById('schemes-document');
+    const schemeStateInput = document.getElementById('scheme-state-input');
+    const schemeCropsInput = document.getElementById('scheme-crops-input');
+
+    // Values sent to the server stay in English; labels follow the selected language
+    const SCHEME_NEEDS = translations.en.schemeNeeds;
+    const selectedNeeds = new Set();
+
+    window.renderSchemeNeeds = function () {
+        const labels = t('schemeNeeds');
+        schemeNeedsEl.innerHTML = SCHEME_NEEDS.map((need, i) => `
+            <label class="scheme-need ${selectedNeeds.has(need) ? 'active' : ''}">
+                <input type="checkbox" value="${escapeHtml(need)}" ${selectedNeeds.has(need) ? 'checked' : ''}>
+                ${escapeHtml((Array.isArray(labels) && labels[i]) || need)}
+            </label>`).join('');
+    };
+
+    schemeNeedsEl.addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        e.target.checked ? selectedNeeds.add(e.target.value) : selectedNeeds.delete(e.target.value);
+        e.target.closest('.scheme-need').classList.toggle('active', e.target.checked);
+    });
+
+    window.renderSchemeNeeds();
+    setupVoiceInput(document.getElementById('scheme-state-voice-btn'), schemeStateInput);
+    setupVoiceInput(document.getElementById('scheme-crops-voice-btn'), schemeCropsInput);
+
+    findSchemesBtn.addEventListener('click', async () => {
+        const state = schemeStateInput.value.trim();
+        if (!state) {
+            alert(t('schemeStateRequired'));
+            return;
+        }
+
+        schemesLoader.style.display = 'flex';
+        schemesResults.style.display = 'none';
+        findSchemesBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/schemes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    state: state,
+                    crops: schemeCropsInput.value.trim(),
+                    land_size: document.getElementById('scheme-land-input').value.trim(),
+                    unit: document.getElementById('scheme-unit-select').value,
+                    category: document.getElementById('scheme-category-select').value,
+                    social_category: document.getElementById('scheme-social-select').value,
+                    woman: document.getElementById('scheme-woman-input').checked,
+                    needs: [...selectedNeeds],
+                    language: window.globalLang
+                })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Failed to find schemes');
+
+            schemesDocument.innerHTML = window.marked ? marked.parse(data.report) : escapeHtml(data.report);
+            schemesDocument.dataset.lang = window.globalLang;
+            schemesDocument.querySelectorAll('a').forEach(a => { a.target = '_blank'; a.rel = 'noopener'; });
+            schemesResults.style.display = 'block';
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+        } finally {
+            schemesLoader.style.display = 'none';
+            findSchemesBtn.disabled = false;
+        }
+    });
+
+    document.getElementById('schemes-pdf-btn').addEventListener('click', (e) => {
+        downloadPdf(schemesDocument, 'Government_Schemes.pdf', e.currentTarget);
+    });
 });

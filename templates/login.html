@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Kissan Sarthi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='images/watermark.jpg') }}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+    <div class="auth-page">
+        <div class="auth-card">
+            <div class="auth-top">
+                <div class="logo">
+                    <i class="ph-fill ph-plant"></i>
+                    <span data-i18n="appName">Kissan Sarthi</span>
+                </div>
+                <select id="auth-language" class="language-select auth-lang">
+                    <option value="en">English</option>
+                    <option value="hi">हिंदी (Hindi)</option>
+                    <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                </select>
+            </div>
+            <p class="auth-subtitle" data-i18n="authSubtitle">Log in to save your reports. Your history is kept for 30 days.</p>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" data-mode="login" data-i18n="loginTab">Login</button>
+                <button class="auth-tab" data-mode="signup" data-i18n="signupTab">Sign Up</button>
+            </div>
+
+            <form id="auth-form" class="auth-form" novalidate>
+                <label class="auth-field" id="name-field" style="display: none;">
+                    <span data-i18n="nameLabel">Full Name</span>
+                    <input type="text" id="auth-name" autocomplete="name">
+                </label>
+                <label class="auth-field">
+                    <span data-i18n="phoneLabel">Mobile Number</span>
+                    <input type="tel" id="auth-phone" inputmode="numeric" autocomplete="tel" placeholder="98765 43210" required>
+                </label>
+                <label class="auth-field">
+                    <span data-i18n="passwordLabel">Password</span>
+                    <input type="password" id="auth-password" autocomplete="current-password" minlength="6" required>
+                </label>
+                <p class="auth-error" id="auth-error" role="alert"></p>
+                <button type="submit" class="btn-primary auth-submit" id="auth-submit">
+                    <i class="ph-bold ph-sign-in"></i> <span id="auth-submit-text" data-i18n="loginBtn">Login</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/translations.js') }}?v=4"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let mode = 'login';
+            let lang = 'en';
+            try { lang = localStorage.getItem('ks-lang') || 'en'; } catch (e) {}
+
+            const form = document.getElementById('auth-form');
+            const nameField = document.getElementById('name-field');
+            const passwordInput = document.getElementById('auth-password');
+            const submitBtn = document.getElementById('auth-submit');
+            const submitText = document.getElementById('auth-submit-text');
+            const errorEl = document.getElementById('auth-error');
+            const langSelect = document.getElementById('auth-language');
+
+            function applyTranslations() {
+                const t = translations[lang] || translations.en;
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (t[key]) el.innerText = t[key];
+                });
+                langSelect.value = lang;
+            }
+
+            langSelect.addEventListener('change', (e) => {
+                lang = e.target.value;
+                try { localStorage.setItem('ks-lang', lang); } catch (err) {}
+                applyTranslations();
+            });
+
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    mode = tab.dataset.mode;
+                    document.querySelectorAll('.auth-tab').forEach(t => t.classList.toggle('active', t === tab));
+                    nameField.style.display = mode === 'signup' ? 'flex' : 'none';
+                    passwordInput.autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+                    submitText.setAttribute('data-i18n', mode === 'signup' ? 'signupBtn' : 'loginBtn');
+                    errorEl.textContent = '';
+                    applyTranslations();
+                });
+            });
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorEl.textContent = '';
+                submitBtn.disabled = true;
+
+                const payload = {
+                    phone: document.getElementById('auth-phone').value,
+                    password: passwordInput.value
+                };
+                if (mode === 'signup') payload.name = document.getElementById('auth-name').value;
+
+                try {
+                    const response = await fetch(`/api/auth/${mode}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Something went wrong');
+                    window.location.href = '/';
+                } catch (error) {
+                    errorEl.textContent = error.message;
+                } finally {
+                    submitBtn.disabled = false;
+                }
+            });
+
+            applyTranslations();
+        });
+    </script>
+</body>
+
+</html>

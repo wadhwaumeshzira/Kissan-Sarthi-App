@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='images/watermark.jpg') }}">
     <!-- Phosphor Icons for modern UI icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -36,7 +36,13 @@
                 <li data-target="weather-section"><a href="#"><i class="ph ph-cloud-sun"></i> <span data-i18n="navWeather">Weather Advisory</span></a></li>
                 <li data-target="guidebook-section"><a href="#"><i class="ph ph-book-open"></i> <span data-i18n="navGuidebook">Crop Guidebook</span></a></li>
                 <li data-target="economics-section"><a href="#"><i class="ph ph-chart-line-up"></i> <span data-i18n="navEconomics">Farming Economics</span></a></li>
+                <li data-target="schemes-section"><a href="#"><i class="ph ph-bank"></i> <span data-i18n="navSchemes">Govt. Schemes</span></a></li>
+                <li data-target="history-section"><a href="#"><i class="ph ph-clock-counter-clockwise"></i> <span data-i18n="navHistory">My History</span></a></li>
             </ul>
+            <div class="user-box">
+                <span class="user-name"><i class="ph ph-user-circle"></i> {{ user_name }}</span>
+                <button class="btn-secondary logout-btn"><i class="ph ph-sign-out"></i> <span data-i18n="logoutBtn">Logout</span></button>
+            </div>
             <div class="sidebar-footer">
                 <p>&copy; 2026 <span data-i18n="appName">Kissan Sarthi</span></p>
             </div>
@@ -50,6 +56,10 @@
                 <div class="home-hero">
                     <img src="{{ url_for('static', filename='images/watermark.jpg') }}" alt="Kissan Sarthi Hero" class="hero-image">
                     <div class="hero-overlay">
+                        <div class="hero-user">
+                            <span><i class="ph ph-user-circle"></i> {{ user_name }}</span>
+                            <button class="logout-btn"><i class="ph ph-sign-out"></i> <span data-i18n="logoutBtn">Logout</span></button>
+                        </div>
                         <div style="position: absolute; top: 1.5rem; right: 1.5rem;">
                             <select id="home-language" class="language-select" style="padding: 0.5rem; border-radius: 0.5rem; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; font-weight: 500; cursor: pointer; outline: none; backdrop-filter: blur(5px);">
                                 <option value="en" style="color: black;">English</option>
@@ -62,6 +72,14 @@
                     </div>
                 </div>
                 
+                <!-- Followed crop plans: today's tasks per plan -->
+                <div class="plans-dashboard" id="plans-dashboard" style="display: none;">
+                    <h2 style="margin: 2rem 0 1rem; font-size: 1.5rem;"><i class="ph ph-calendar-check"></i> <span data-i18n="plansTitle">My Crop Plans</span></h2>
+                    <div class="plans-grid" id="plans-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
                 <h2 style="margin: 2rem 0 1rem; font-size: 1.5rem;" data-i18n="homeFeatures">Our Features</h2>
                 <div class="feature-grid">
                     <div class="feature-card" data-link="disease-section">
@@ -88,6 +106,16 @@
                         <div class="feature-icon"><i class="ph ph-chart-line-up"></i></div>
                         <h3 data-i18n="navEconomics">Farming Economics</h3>
                         <p data-i18n="featureEconDesc">Calculate total costs and projected profit for the Indian market.</p>
+                    </div>
+                    <div class="feature-card" data-link="schemes-section">
+                        <div class="feature-icon"><i class="ph ph-bank"></i></div>
+                        <h3 data-i18n="navSchemes">Govt. Schemes</h3>
+                        <p data-i18n="featureSchemesDesc">Find government schemes, subsidies and insurance you are eligible for.</p>
+                    </div>
+                    <div class="feature-card" data-link="history-section">
+                        <div class="feature-icon"><i class="ph ph-clock-counter-clockwise"></i></div>
+                        <h3 data-i18n="navHistory">My History</h3>
+                        <p data-i18n="historySubtitle">Your reports and results from the last 30 days. Older items are deleted automatically.</p>
                     </div>
                 </div>
             </div>
@@ -136,6 +164,7 @@
                                 <h2 data-i18n="predictionText">Analysis Result</h2>
                             </div>
                             <h3 id="prediction-text">Apple - Healthy</h3>
+                            <button class="btn-secondary listen-btn" data-listen-target="results"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         </div>
 
                         <div class="recommendations-grid">
@@ -173,6 +202,10 @@
                 </header>
 
                 <div class="chat-container">
+                    <div class="chat-toolbar">
+                        <span class="chat-memory-hint" data-i18n="chatMemoryHint">I remember this conversation until you start a new chat.</span>
+                        <button class="btn-secondary" id="new-chat-btn"><i class="ph-bold ph-plus"></i> <span data-i18n="newChatBtn">New chat</span></button>
+                    </div>
                     <div class="chat-box" id="chat-box">
                         <div class="chat-message bot">
                             <div class="avatar"><i class="ph ph-robot"></i></div>
@@ -244,6 +277,7 @@
                         <div class="a-header">
                             <i class="ph ph-lightbulb"></i>
                             <h3>AI Crop Advisory</h3>
+                            <button class="btn-secondary listen-btn" data-listen-target="w-advisory" style="margin-left: auto;"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         </div>
                         <div class="a-content" id="w-advisory">
                             <!-- Populated by JS -->
@@ -281,7 +315,20 @@
                 </div>
 
                 <div class="guidebook-results" id="guidebook-results" style="display: none;">
+                    <div class="follow-box" id="follow-box">
+                        <div>
+                            <h3><i class="ph ph-calendar-plus"></i> <span data-i18n="followTitle">Follow this plan</span></h3>
+                            <p data-i18n="followDesc">Get day-by-day reminders on your home page, starting from your sowing date.</p>
+                        </div>
+                        <div class="follow-controls">
+                            <label><span data-i18n="sowingDateLabel">Sowing date</span>
+                                <input type="date" id="follow-date">
+                            </label>
+                            <button class="btn-primary" id="follow-btn"><i class="ph-bold ph-check-circle"></i> <span data-i18n="followBtn">Follow this plan</span></button>
+                        </div>
+                    </div>
                     <div class="action-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+                        <button class="btn-secondary listen-btn" data-listen-target="guidebook-document"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         <button id="download-pdf-btn" class="btn-primary" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
                     </div>
                     
@@ -324,10 +371,119 @@
 
                 <div class="economics-results" id="economics-results" style="display: none;">
                     <div class="action-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+                        <button class="btn-secondary listen-btn" data-listen-target="economics-document"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
                         <button id="eco-download-pdf-btn" class="btn-primary" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
                     </div>
                     <div class="economics-document" id="economics-document">
                         <!-- Content will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Government Schemes Section -->
+            <div id="schemes-section" class="tab-section" style="display: none;">
+                <header>
+                    <h1 data-i18n="schemesTitle">Government Schemes Finder</h1>
+                    <p data-i18n="schemesSubtitle">Tell us about your farm and we will find central and state schemes, subsidies and insurance you may be eligible for.</p>
+                </header>
+
+                <div class="guidebook-search">
+                    <div class="input-row">
+                        <div class="search-input-group">
+                            <input type="text" id="scheme-state-input" placeholder="State (e.g., Punjab)" data-i18n-placeholder="schemeStatePlaceholder">
+                            <button id="scheme-state-voice-btn" class="btn-icon" title="Voice Search"><i class="ph-bold ph-microphone"></i></button>
+                        </div>
+                        <div class="search-input-group">
+                            <input type="text" id="scheme-crops-input" placeholder="Crops you grow (e.g., Wheat, Paddy)" data-i18n-placeholder="schemeCropsPlaceholder">
+                            <button id="scheme-crops-voice-btn" class="btn-icon" title="Voice Search"><i class="ph-bold ph-microphone"></i></button>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <div class="search-input-group" style="flex: 0.6;">
+                            <input type="number" id="scheme-land-input" placeholder="Land Size (e.g., 5)" data-i18n-placeholder="ecoSizeInputPlaceholder" min="0" step="0.1">
+                        </div>
+                        <select id="scheme-unit-select" class="language-select" style="flex: 0.4;">
+                            <option value="Acres">Acres</option>
+                            <option value="Hectares">Hectares</option>
+                        </select>
+                        <select id="scheme-category-select" class="language-select" style="flex: 1;">
+                            <option value="Small / marginal farmer (up to 2 hectares)">Small / marginal (up to 2 ha / 5 acres)</option>
+                            <option value="Medium or large farmer (more than 2 hectares)">Medium / large (more than 2 ha)</option>
+                            <option value="Tenant farmer / sharecropper (no own land)">Tenant / sharecropper</option>
+                        </select>
+                        <select id="scheme-social-select" class="language-select" style="flex: 0.6;">
+                            <option value="General">General</option>
+                            <option value="OBC">OBC</option>
+                            <option value="SC">SC</option>
+                            <option value="ST">ST</option>
+                        </select>
+                    </div>
+                    <div>
+                        <p class="scheme-needs-label" data-i18n="schemeNeedsLabel">What do you need help with? (optional)</p>
+                        <div class="scheme-needs" id="scheme-needs">
+                            <!-- Populated by JS -->
+                        </div>
+                        <label class="scheme-woman"><input type="checkbox" id="scheme-woman-input"> <span data-i18n="schemeWomanLabel">I am a woman farmer</span></label>
+                    </div>
+                    <div class="input-row">
+                        <button id="find-schemes-btn" class="btn-primary" style="flex: 1; justify-content: center;"><i class="ph-bold ph-magnifying-glass"></i> <span data-i18n="findSchemesBtn">Find Schemes</span></button>
+                    </div>
+                </div>
+
+                <div class="loader-container" id="schemes-loader" style="display: none;">
+                    <div class="spinner"></div>
+                    <p data-i18n="loadingSchemes">Finding schemes for you...</p>
+                </div>
+
+                <div class="economics-results" id="schemes-results" style="display: none;">
+                    <div class="action-bar" style="margin-bottom: 1rem; justify-content: flex-end;">
+                        <button class="btn-secondary listen-btn" data-listen-target="schemes-document"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
+                        <button id="schemes-pdf-btn" class="btn-primary" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
+                    </div>
+                    <div class="guidebook-document" id="schemes-document">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div id="history-section" class="tab-section" style="display: none;">
+                <header>
+                    <h1 data-i18n="historyTitle">My History</h1>
+                    <p data-i18n="historySubtitle">Your reports and results from the last 30 days. Older items are deleted automatically.</p>
+                </header>
+
+                <div id="history-list-view">
+                    <div class="history-filters" id="history-filters">
+                        <button class="history-filter active" data-type="" data-i18n="historyAll">All</button>
+                        <button class="history-filter" data-type="disease" data-i18n="navDisease">Disease Recognition</button>
+                        <button class="history-filter" data-type="chat" data-i18n="navAssistant">AI Assistant</button>
+                        <button class="history-filter" data-type="weather" data-i18n="navWeather">Weather Advisory</button>
+                        <button class="history-filter" data-type="guidebook" data-i18n="navGuidebook">Crop Guidebook</button>
+                        <button class="history-filter" data-type="economics" data-i18n="navEconomics">Farming Economics</button>
+                        <button class="history-filter" data-type="schemes" data-i18n="navSchemes">Govt. Schemes</button>
+                    </div>
+
+                    <div class="loader-container" id="history-loader" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                    <p class="history-empty" id="history-empty" style="display: none;" data-i18n="historyEmpty">No history yet. Reports you generate will appear here.</p>
+                    <div class="history-list" id="history-list">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div id="history-detail-view" style="display: none;">
+                    <div class="action-bar" style="margin-bottom: 1rem; justify-content: space-between;">
+                        <button class="btn-secondary" id="history-back-btn"><i class="ph-bold ph-arrow-left"></i> <span data-i18n="historyBack">Back to History</span></button>
+                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                            <button class="btn-secondary" id="history-follow-btn" style="display: none;"><i class="ph-bold ph-calendar-plus"></i> <span data-i18n="followBtn">Follow this plan</span></button>
+                            <button class="btn-secondary listen-btn" id="history-listen-btn" data-listen-target="history-document"><i class="ph-bold ph-speaker-high"></i> <span data-i18n="listenBtn">Listen</span></button>
+                            <button class="btn-primary" id="history-pdf-btn" style="background-color: var(--primary-dark);"><i class="ph-bold ph-download-simple"></i> <span data-i18n="downloadPdfBtn">Download PDF</span></button>
+                        </div>
+                    </div>
+                    <div class="guidebook-document" id="history-document">
+                        <!-- Populated by JS -->
                     </div>
                 </div>
             </div>
@@ -354,8 +510,8 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <!-- html2pdf for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='js/translations.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/translations.js') }}?v=4"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}?v=4"></script>
 </body>
 
 </html>
